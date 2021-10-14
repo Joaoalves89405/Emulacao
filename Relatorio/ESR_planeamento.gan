@@ -33,8 +33,26 @@
             <taskproperty id="tpd8" name="coordinator" type="default" valuetype="text"/>
             <taskproperty id="tpd9" name="predecessorsr" type="default" valuetype="text"/>
         </taskproperties>
+        <task id="0" name="PLaneamento" color="#8cb6ce" meeting="false" start="2021-10-14" duration="7" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true"/>
+        <task id="2" name="tarefa_2" meeting="false" start="2021-10-14" duration="1" complete="0" expand="true"/>
+        <task id="3" name="tarefa_3" meeting="false" start="2021-10-14" duration="1" complete="0" expand="true"/>
+        <task id="4" name="tarefa_4" meeting="false" start="2021-10-14" duration="1" complete="0" expand="true"/>
+        <task id="5" name="tarefa_5" meeting="false" start="2021-10-14" duration="1" complete="0" expand="true"/>
+        <task id="6" name="tarefa_6" meeting="false" start="2021-10-14" duration="1" complete="0" expand="true"/>
+        <task id="7" name="tarefa_7" meeting="false" start="2021-10-14" duration="1" complete="0" expand="true"/>
+        <task id="8" name="tarefa_8" meeting="false" start="2021-10-14" duration="1" complete="0" expand="true"/>
+        <task id="9" name="tarefa_9" meeting="false" start="2021-10-14" duration="1" complete="0" expand="true"/>
+        <task id="10" name="tarefa_10" meeting="false" start="2021-10-14" duration="1" complete="0" expand="true"/>
+        <task id="11" name="tarefa_11" meeting="false" start="2021-10-14" duration="1" complete="0" expand="true"/>
+        <task id="12" name="tarefa_12" meeting="false" start="2021-10-14" duration="1" complete="0" expand="true"/>
+        <task id="13" name="tarefa_13" meeting="false" start="2021-10-14" duration="1" complete="0" expand="true"/>
+        <task id="14" name="tarefa_14" meeting="false" start="2021-10-14" duration="1" complete="0" expand="true"/>
     </tasks>
-    <resources/>
+    <resources>
+        <resource id="0" name="José Pedro Marques Macedo " function="Default:0" contacts="a80311@alunos.uminho.pt" phone=""/>
+        <resource id="1" name="João Miguel Cerca Alves" function="Default:0" contacts="" phone=""/>
+        <resource id="2" name="João Carlos Teixeira Cerca da Cunha" function="Default:0" contacts="" phone=""/>
+    </resources>
     <allocations/>
     <vacations/>
     <previous/>
