@@ -1,11 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?><project name="Emulacao e Simulacao de Redes" company="" webLink="http://" view-date="2021-11-12" view-index="0" gantt-divider-location="468" resource-divider-location="300" version="2.8.11" locale="en_GB">
+<?xml version="1.0" encoding="UTF-8"?><project name="Emulacao e Simulacao de Redes" company="" webLink="http://" view-date="2021-10-25" view-index="0" gantt-divider-location="468" resource-divider-location="300" version="2.8.11" locale="en_GB">
     <description/>
-    <view zooming-state="default:2" id="gantt-chart">
-        <field id="tpd3" name="Name" width="223" order="0"/>
-        <field id="tpd4" name="Begin date" width="121" order="1"/>
+    <view zooming-state="default:6" id="gantt-chart">
+        <field id="tpd3" name="Name" width="284" order="0"/>
+        <field id="tpd4" name="Begin date" width="60" order="1"/>
         <field id="tpd5" name="End date" width="120" order="2"/>
-        <timeline><![CDATA[6]]></timeline>
-        <option id="color.recent"><![CDATA[#ff6666 #ffccff #ff0033 #ccccff #9999ff #ff99ff #ffcccc]]></option>
+        <timeline><![CDATA[6,13]]></timeline>
+        <option id="color.recent"><![CDATA[#ffe863 #f5bd1f #8769ac #dec1f5 #e7d7fc #bcd292 #678a6b #99ccff #ffcccc #ccffcc]]></option>
     </view>
     <view id="resource-table">
         <field id="0" name="Name" width="210" order="0"/>
@@ -40,26 +40,53 @@
             <task id="16" name="Deliberação sobre decisões arquitecturais" color="#ccccff" meeting="false" start="2021-10-12" duration="4" complete="100" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true"/>
             <task id="18" name="Elaboração de relatório de especificação" color="#ccccff" meeting="false" start="2021-10-19" duration="4" complete="100" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true"/>
         </task>
-        <task id="5" name="Construção da rede física" color="#ffcccc" meeting="false" start="2021-10-25" duration="5" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true">
+        <task id="5" name="Construção da rede física" color="#99ccff" meeting="false" start="2021-10-25" duration="5" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true">
             <notes><![CDATA[-Protocolos
 -Análise estrutural]]></notes>
         </task>
-        <task id="6" name="Injeção de constragimentos na rede física" color="#ffcccc" meeting="false" start="2021-10-26" duration="4" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true"/>
-        <task id="7" name="Elaboração da Rede Overlay" color="#ff99ff" meeting="false" start="2021-10-27" duration="21" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true">
-            <task id="19" name="Protocolo de construção" color="#ffccff" meeting="false" start="2021-10-27" duration="10" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true"/>
-            <task id="20" name="Protocolo de manutenção" color="#ffccff" meeting="false" start="2021-11-03" duration="10" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true"/>
-            <task id="23" name="Análise de métricas relevantes" color="#ffccff" meeting="false" start="2021-11-10" duration="3" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true">
+        <task id="6" name="Injeção de constragimentos na rede física" color="#99ccff" meeting="false" start="2021-10-26" duration="4" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true"/>
+        <task id="7" name="Elaboração da Rede Overlay" color="#8769ac" meeting="false" start="2021-10-27" duration="34" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true">
+            <task id="19" name="Protocolo de construção" color="#e7d7fc" shape="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0" meeting="false" start="2021-10-27" duration="10" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true"/>
+            <task id="20" name="Protocolo de manutenção" color="#e7d7fc" shape="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0" meeting="false" start="2021-11-03" duration="10" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true"/>
+            <task id="23" name="Análise de métricas relevantes" color="#e7d7fc" meeting="false" start="2021-11-09" duration="3" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true">
+                <depend id="79" type="2" difference="0" hardness="Strong"/>
+            </task>
+            <task id="79" name="Concepção de um modelo de dados" color="#e7d7fc" meeting="false" start="2021-11-12" duration="3" complete="0" thirdDate="2021-11-11" thirdDate-constraint="0" expand="true">
+                <notes><![CDATA[Modelo de dados para guardar informações da gestão efectuada]]></notes>
                 <depend id="28" type="2" difference="0" hardness="Strong"/>
             </task>
-            <task id="28" name="Elaboração algoritmo de testagem" color="#ffccff" meeting="false" start="2021-11-15" duration="4" complete="0" thirdDate="2021-11-09" thirdDate-constraint="0" expand="true">
+            <task id="28" name="Elaboração algoritmo de testagem" color="#e7d7fc" meeting="false" start="2021-11-17" duration="6" complete="0" thirdDate="2021-11-09" thirdDate-constraint="0" expand="true">
                 <depend id="26" type="2" difference="0" hardness="Strong"/>
             </task>
-            <task id="26" name="Implementação do algoritmo de testagem" color="#ffccff" meeting="false" start="2021-11-19" duration="4" complete="0" thirdDate="2021-11-09" thirdDate-constraint="0" expand="true"/>
+            <task id="26" name="Implementação do algoritmo de testagem" color="#e7d7fc" meeting="false" start="2021-11-25" duration="2" complete="0" thirdDate="2021-11-09" thirdDate-constraint="0" expand="true"/>
+            <task id="135" name="Relatório - Tarefa 2" color="#e7d7fc" meeting="false" start="2021-11-23" duration="5" complete="0" thirdDate="2021-10-04" thirdDate-constraint="0" expand="true"/>
+            <task id="120" name="Otimização da Rede Overlay" color="#678a6b" meeting="false" start="2021-11-30" duration="10" complete="0" thirdDate="2021-11-11" thirdDate-constraint="0" expand="true">
+                <task id="126" name="Estudo de melhorias para o End-to-End Delay" color="#bcd292" meeting="false" start="2021-11-30" duration="3" complete="0" thirdDate="2021-10-11" thirdDate-constraint="0" expand="true">
+                    <depend id="121" type="2" difference="0" hardness="Strong"/>
+                </task>
+                <task id="121" name="Alterações dinamicas na rede" color="#bcd292" meeting="false" start="2021-12-03" duration="4" complete="0" thirdDate="2021-10-18" thirdDate-constraint="0" expand="true"/>
+                <task id="127" name="Alterações" color="#bcd292" meeting="false" start="2021-12-09" duration="3" complete="0" thirdDate="2021-11-22" thirdDate-constraint="0" expand="true"/>
+            </task>
         </task>
-        <task id="12" name="Preparação da Demo" color="#ff6666" meeting="false" start="2021-11-25" duration="2" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true"/>
+        <task id="12" name="Preparação da Demo - Tarefa 2" color="#ff6666" meeting="false" start="2021-11-25" duration="3" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" expand="true"/>
         <task id="10" name="Demonstração inicial" color="#ff0033" meeting="true" start="2021-11-29" duration="0" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" priority="4" expand="true"/>
-        <task id="13" name="tarefa_13" meeting="false" start="2021-10-14" duration="1" complete="0" expand="true"/>
-        <task id="14" name="tarefa_14" meeting="false" start="2021-10-14" duration="1" complete="0" expand="true"/>
+        <task id="36" name="Aplicação" color="#f5bd1f" meeting="false" start="2021-12-14" duration="16" complete="0" thirdDate="2021-11-11" thirdDate-constraint="0" expand="true">
+            <task id="55" name="Estudo End-to-End Delay para a Aplicação" color="#ffe863" meeting="false" start="2021-12-14" duration="3" complete="0" thirdDate="2021-11-11" thirdDate-constraint="0" expand="true"/>
+            <task id="53" name="Concepção" color="#ffe863" meeting="false" start="2021-12-15" duration="8" complete="0" thirdDate="2021-11-11" thirdDate-constraint="0" expand="true">
+                <depend id="75" type="2" difference="0" hardness="Strong"/>
+            </task>
+            <task id="75" name="Desenvolvimento" color="#ffe863" meeting="false" start="2021-12-27" duration="7" complete="0" thirdDate="2021-10-18" thirdDate-constraint="0" expand="true"/>
+            <task id="131" name="Relatorio - Tarefa 3" color="#ffcccc" meeting="false" start="2021-12-30" duration="4" complete="0" thirdDate="2021-10-04" thirdDate-constraint="0" expand="true"/>
+        </task>
+        <task id="37" name="Estado do Desempenho" color="#999999" meeting="false" start="2022-01-05" duration="7" complete="0" thirdDate="2021-11-11" thirdDate-constraint="0" expand="true">
+            <task id="63" name="Testes - Especificação e realização" color="#cccccc" meeting="false" start="2022-01-05" duration="4" complete="0" thirdDate="2021-11-11" thirdDate-constraint="0" expand="true">
+                <depend id="69" type="2" difference="0" hardness="Strong"/>
+            </task>
+            <task id="69" name="Análise dos resultados" color="#cccccc" meeting="false" start="2022-01-11" duration="3" complete="0" thirdDate="2021-10-18" thirdDate-constraint="0" expand="true"/>
+        </task>
+        <task id="65" name="Relatório - Tarefa 4" color="#ffcccc" meeting="false" start="2022-01-11" duration="6" complete="0" thirdDate="2021-10-18" thirdDate-constraint="0" expand="true"/>
+        <task id="13" name="Demonstração Final" color="#ff0033" meeting="true" start="2022-01-18" duration="0" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" priority="4" expand="true"/>
+        <task id="14" name="Relatório final" color="#ff6666" meeting="true" start="2022-01-19" duration="0" complete="0" thirdDate="2021-10-14" thirdDate-constraint="0" priority="4" expand="true"/>
     </tasks>
     <resources>
         <resource id="0" name="José Pedro Marques Macedo " function="Default:0" contacts="a80311@alunos.uminho.pt" phone=""/>
