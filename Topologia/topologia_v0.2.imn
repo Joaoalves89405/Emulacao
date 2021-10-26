@@ -89,8 +89,8 @@ node n3 {
 	!
     }
     canvas c1
-    iconcoords {543.0 413.0}
-    labelcoords {508.0 425.0}
+    iconcoords {542.0 413.0}
+    labelcoords {507.0 425.0}
     interface-peer {eth0 n1}
     interface-peer {eth3 n8}
     interface-peer {eth1 n12}
@@ -220,6 +220,7 @@ node n10 {
     interface-peer {eth2 n12}
     interface-peer {eth3 n33}
     interface-peer {eth4 n27}
+    services {OSPFv2 OSPFv3 zebra IPForward}
 }
 
 node n11 {
@@ -247,6 +248,7 @@ node n11 {
     interface-peer {eth1 n10}
     interface-peer {eth0 n17}
     interface-peer {eth2 n3}
+    services {OSPFv2 OSPFv3 zebra IPForward}
 }
 
 node n12 {
@@ -288,8 +290,8 @@ node n13 {
 	!
     }
     canvas c1
-    iconcoords {223.0 527.0}
-    labelcoords {202.0 525.0}
+    iconcoords {223.0 528.0}
+    labelcoords {202.0 526.0}
     interface-peer {eth0 n1}
 }
 
@@ -305,9 +307,10 @@ node n15 {
 	!
     }
     canvas c1
-    iconcoords {239.0 376.0}
-    labelcoords {223.0 411.0}
+    iconcoords {235.0 348.0}
+    labelcoords {219.0 383.0}
     interface-peer {eth0 n17}
+    services {DefaultRoute}
 }
 
 node n16 {
@@ -325,6 +328,7 @@ node n16 {
     iconcoords {292.0 446.0}
     labelcoords {267.0 450.0}
     interface-peer {eth0 n17}
+    services {DefaultRoute}
 }
 
 node n17 {
@@ -370,8 +374,8 @@ node n19 {
 	!
     }
     canvas c1
-    iconcoords {520.0 188.0}
-    labelcoords {501.0 187.0}
+    iconcoords {520.0 187.0}
+    labelcoords {501.0 186.0}
     interface-peer {eth0 n20}
 }
 
@@ -676,9 +680,10 @@ node n27 {
 	!
     }
     canvas c1
-    iconcoords {254.0 155.0}
-    labelcoords {231.0 156.0}
+    iconcoords {255.0 156.0}
+    labelcoords {232.0 157.0}
     interface-peer {eth0 n10}
+    services {DefaultRoute}
 }
 
 node n33 {
@@ -693,9 +698,10 @@ node n33 {
 	!
     }
     canvas c1
-    iconcoords {271.0 77.0}
-    labelcoords {245.0 80.0}
+    iconcoords {276.0 75.0}
+    labelcoords {250.0 78.0}
     interface-peer {eth0 n10}
+    services {DefaultRoute}
 }
 
 link l1 {
@@ -714,8 +720,10 @@ link l11 {
 }
 
 link l12 {
+    ber 50.0
+    delay 50000
     nodes {n10 n11}
-    bandwidth 0
+    bandwidth 512000
 }
 
 link l10 {
@@ -889,9 +897,9 @@ canvas c1 {
 
 option global {
     interface_names no
-    ip_addresses no
+    ip_addresses yes
     ipv6_addresses no
-    node_labels yes
+    node_labels no
     link_labels no
     show_api no
     background_images no
