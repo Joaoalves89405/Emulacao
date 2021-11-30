@@ -408,22 +408,6 @@ node n8 {
 	}
     }
     custom-config {
-	custom-config-id service:UserDefined
-	custom-command UserDefined
-	config {
-	dirs=('/etc', )
-	files=('/etc/resolv.conf', )
-	}
-    }
-    custom-config {
-	custom-config-id service:UserDefined:/etc/resolv.conf
-	custom-command /etc/resolv.conf
-	config {
-	nameserver 193.137.16.75
-	nameserver 8.8.8.8
-	}
-    }
-    custom-config {
 	custom-config-id service:NAT
 	custom-command NAT
 	config {
@@ -471,7 +455,7 @@ node n8 {
 	
 	}
     }
-    services {OSPFv2 OSPFv3 zebra NAT DefaultRoute IPForward UserDefined}
+    services {OSPFv2 OSPFv3 zebra NAT DefaultRoute IPForward}
     interface-peer {eth1 n35}
 }
 
@@ -1601,7 +1585,7 @@ annotation a3 {
 }
 
 annotation a4 {
-    iconcoords {610 137 949 504}
+    iconcoords {603 140 944 509}
     type oval
     label {}
     labelcolor black
