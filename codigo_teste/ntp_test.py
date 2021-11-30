@@ -3,11 +3,11 @@ from time import sleep
 import ntplib
 from datetime import datetime
 
-def get_ntp_time( source ):
-	ntp_pool = '0.pool.ntp.org'
+def get_ntp_time( ):
+	ntp_pool = '1.pt.pool.ntp.org'
 
 	call = ntplib.NTPClient()
-	response = call.request(source, version=3)
+	response = call.request(ntp_pool, version=3)
 	try:
 		t=response.orig_time
 		return t
@@ -18,7 +18,7 @@ def get_ntp_time( source ):
 
 if __name__ == "__main__":
 
-	now = get_ntp_time('0.pool.ntp.org')
+	now = get_ntp_time()
 	runat = time.time()+1
 	print ("NTP time: %s" % now)
 	print ("My time: %s" % runat)
