@@ -1,7 +1,7 @@
 import sqlite3
 
 
-create_routes_table = """CREATE TABLE "routes_table" (
+create_peer_routes_table = """CREATE TABLE "routes_table" (
 							"route_id"	INTEGER NOT NULL UNIQUE,
 							"source"	TEXT NOT NULL,
 							"destination"	TEXT UNIQUE,
@@ -10,13 +10,40 @@ create_routes_table = """CREATE TABLE "routes_table" (
 							PRIMARY KEY("route_id" AUTOINCREMENT)
 						);"""
 	
+create_server_tables = """CREATE TABLE "routes_table" (
+							"route_id"	INTEGER NOT NULL UNIQUE,
+							"source"	TEXT NOT NULL,
+							"destination"	TEXT UNIQUE,
+							"next_hop"	TEXT,
+							"cost"	REAL,
+							FOREIGN KEY("source") REFERENCES "peer_table"("ip_address"),
+							PRIMARY KEY("route_id" AUTOINCREMENT)
+							);
+							CREATE TABLE "peer_table" (
+								"peer_id"	INTEGER NOT NULL UNIQUE,
+								"state"	INTEGER,
+								"area"	INTEGER,
+								"ip_address"	TEXT,
+								PRIMARY KEY("peer_id" AUTOINCREMENT)
+							);"""
 
-def create_table(conn, create_table_sql):
-	try:
-		c = conn.cursor()
-		c.execute(create_table_sql)
-	except Exception as e:
-		print(e)
+def create_table(conn, create_table_sql, peer_server):
+
+	if peer_server is 1:
+		#Server tables
+		try:
+			c = conn.cursor()
+			c.execute(create_server_tables)
+		except Exception as e:
+			print(e)
+	elif peer_server is 0:
+		# peer tables
+		try:
+			c = conn.cursor()
+			c.execute(create_routes_table)
+		except Exception as e:
+			print(e)
+
 
 def create_connection(db_file):
 	conn = None
