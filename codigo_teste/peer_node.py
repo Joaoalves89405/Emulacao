@@ -43,17 +43,6 @@ def error_packet (socket_UDP):
 if __name__ == '__main__':
 	socket_UDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	hello_packet(socket_UDP)
-	print(localIP)
-	socket_UDP.bind(("10.0.2.15",7777))
-
-	while True:
-		try:
-			recv_data, (fromIP, ports) = socket_UDP.recvfrom(1024)
-			print(recv_data)
-			print(fromIP)
-		except:
-			print("error")
-
 
 	goodbye_packet(socket_UDP)
 
