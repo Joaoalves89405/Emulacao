@@ -1,4 +1,5 @@
 import sqlite3
+import socket
 
 
 create_peer_routes_table = """CREATE TABLE "routes_table" (
@@ -223,6 +224,7 @@ if __name__ == '__main__':
 	route4 = (PeerID,"10.0.50.5", "10.0.0.7", 17)
 
 	routes = {route1,route2,route3,route4}
+	hostname=socket.gethostbyname(socket.gethostname())
 
 	conn = create_connection("/%s_str/DB_server.db" % hostname)
 
@@ -234,7 +236,7 @@ if __name__ == '__main__':
 		for peer in peers:
 			insert_peer(conn, peer)
 
-			for route in routes:
+		for route in routes:
 			insert_route(conn, route)
 
 		#delete_peer(conn, PeerID)
