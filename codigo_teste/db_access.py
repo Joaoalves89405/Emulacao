@@ -224,7 +224,7 @@ if __name__ == '__main__':
 
 	routes = {route1,route2,route3,route4}
 
-	conn = create_connection("DB_server.db")
+	conn = create_connection("/%s_str/DB_server.db" % hostname)
 
 	if conn is not None:
 
@@ -234,7 +234,7 @@ if __name__ == '__main__':
 		for peer in peers:
 			insert_peer(conn, peer)
 
-		for route in routes:
+			for route in routes:
 			insert_route(conn, route)
 
 		#delete_peer(conn, PeerID)
