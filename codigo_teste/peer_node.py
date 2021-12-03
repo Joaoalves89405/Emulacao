@@ -3,18 +3,19 @@ import time
 import db_access
 from threading import Thread
 
-MCAST_IP = '224.0.0.1'
-MCAST_PORT = 5001
-MULTICAST_TTL = 2
-localIP=socket.gethostbyname(socket.gethostname())
+
+
+SERVER_IP  = "127.0.1.1"
+UDP_PORT = 5001
+localIP = socket.gethostbyname(socket.gethostname())
 
 			#DATAGRAMA HELLO
-#	|	IP	|	RAZAO(0)	|	TIMESTAMP 
+#	|	ID	|	RAZAO(0)	|	TIMESTAMP 
 def send_hello_packet (socket_UDP):
 	razao = 0
 	timestamp = time.time()
-	hello = (localIP + str(razao)+ str(timestamp)).encode()
-	socket_UDP.sendto(hello,(MCAST_IP,MCAST_PORT))
+	hello = (localIP +"/"+ str(razao)+"/"+ str(timestamp)).encode()
+	socket_UDP.sendto(hello,(SERVER_IP,UDP_PORT))
 
 			#DATAGRAMA GOODBYE
 #	|	IP	|	RAZAO(1)	|	TIMESTAMP 
@@ -47,19 +48,9 @@ def boot_up():
 		#> add to DB
 
 	socket_UDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	socket_UDP.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, MULTICAST_TTL)
+	socket_UDP.bind((localIP,5000))
 	send_hello_packet(socket_UDP)
-
-	
-
-
-	pass	
-
 
 if __name__ == '__main__':
 	
-	goodbye_packet(socket_UDP)
-
-
-
-	socket_UDP.close()
+	boot_up()

@@ -27,7 +27,7 @@ create_server_tables = """CREATE TABLE "routes_table" (
 							"peer_id"	INTEGER NOT NULL UNIQUE,
 							"state"	INTEGER,
 							"area"	INTEGER,
-							"ip_address"	TEXT,
+							"ip_address"	TEXT UNIQUE,
 							PRIMARY KEY("peer_id" AUTOINCREMENT)
 							);"""
 
@@ -115,9 +115,11 @@ def check_cost_from_destination(conn, destination):
 #Server function to get all routes from a peer
 def insert_peer(conn, peer):
 	cur = conn.cursor()
+	sql = '''INSERT OR IGNORE INTO peer_table( state, area, ip_address)
+				VALUES(?,?,?)ON CONFLICT(ip_address) DO UPDATE SET 
+					state = excluded.state;'''
 	try:
-		cur.execute('''INSERT OR IGNORE INTO peer_table(peer_id, state, area, ip_address)
-						VALUES(?,?,?,?)''', peer)
+		cur.execute(sql, peer)
 		conn.commit()
 		return 0
 	except Exception as e:
@@ -137,7 +139,6 @@ def delete_peer(conn, peer_id):
 		print(e)
 		return 1
 
-
 def get_peer_routes(conn, peer_id):
 	cur = conn.cursor()
 	try:
@@ -149,6 +150,17 @@ def get_peer_routes(conn, peer_id):
 		return 1
 
 	print(routes_list)
+
+def get_peerID(conn, ip_address):
+	cur = conn.cursor()
+	sql = '''SELECT peer_id FROM peer_table WHERE ip_address=?'''
+	try:
+		cur.execute(sql, (ip_address,))
+		peer_id = cur.fetchone()[0]
+		return peer_id
+	except Exception as e:
+		print(e)
+		return 1
 
 def get_peer_state(conn, peer_id):
 	cur = conn.cursor()
@@ -172,7 +184,16 @@ def set_peer_state(conn, peer_id, status):
 		print(e)
 		return 1
 
-
+def get_allpeer_ip(conn):
+	cur = conn.cursor()
+	try:
+		sql = '''SELECT ip_address FROM peer_table'''
+		cur.execute(sql)
+		ip_list = cur.fetchall()
+		return ip_list
+	except Exception as e:
+		print(e)
+		return 1
 
 
 if __name__ == '__main__':
