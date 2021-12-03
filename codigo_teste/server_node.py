@@ -38,10 +38,11 @@ def respond_message(message, peer_ip):
 
 				#GOODBYE MESSAGE
 	elif(message_fields[1] == "1"):
-		if(set_peer_state(db_conn,peer_ip,0) == 0 & delete_route_by_destination(db_conn,peer_ip) == 0):
+		if(set_peer_state(db_conn,peer_ip,0) == 0):
 				print("Removed Peer")	
 		 #remover entradas restantes desse peer na tabela dos outros peers
-				
+		else:
+			print("Error while removing peer")		
 
 			#ERROR MESSAGE
 	elif(message_fields[1] == "2"):

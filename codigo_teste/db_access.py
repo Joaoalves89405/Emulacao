@@ -29,7 +29,12 @@ create_server_tables = """CREATE TABLE "routes_table" (
 							"area"	INTEGER,
 							"ip_address"	TEXT UNIQUE,
 							PRIMARY KEY("peer_id" AUTOINCREMENT)
-							);"""
+							);
+						CREATE TRIGGER eliminarRotasPeer AFTER DELETE ON peer_table 
+							FOR EACH ROW
+							BEGIN 
+								DELETE * FROM routes_table WHERE destination = peerIP
+							END	"""
 
 def create_table(conn, create_table_sql):
 
