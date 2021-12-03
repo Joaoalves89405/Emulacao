@@ -88,16 +88,28 @@ def delete_route(conn, route_id):
 	cur.execute(sql,(id,))
 	conn.commit()
 
+def delete_route_by_destination(conn, destination):
+
+	cur = conn.cursor()
+	try:
+		cur.execute('DELETE * FROM routes_table WHERE destination=?', (destination,))
+		line = cur.fetchone() 
+		print(line)
+		return 0
+	except Exception as e:
+		print(e)
+		return 1
+
 def select_route_by_destination(conn, destination):
 
 	cur = conn.cursor()
 	try:
 		cur.execute('SELECT * FROM routes_table WHERE destination=?', (destination,))
 		line = cur.fetchone() 
+		print(line)
+		return line
 	except Exception as e:
 		print("")
-	print(line)
-	return line
 
 
 def check_cost_from_destination(conn, destination):
@@ -134,6 +146,7 @@ def delete_peer(conn, peer_id):
 		cur = conn.cursor()
 		cur.execute(sql,(int(peer_id),))
 		conn.commit()
+		return 0
 
 	except Exception as e:
 		print(e)
