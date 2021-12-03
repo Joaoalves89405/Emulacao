@@ -15,7 +15,7 @@ create_peer_routes_table = """CREATE TABLE "routes_table" (
 create_server_tables = """CREATE TABLE "routes_table" (
 							"route_id"	INTEGER NOT NULL UNIQUE,
 							"source"	TEXT NOT NULL,
-							"destination"	TEXT UNIQUE,
+							"destination"	TEXT,
 							"next_hop"	TEXT,
 							"cost"	REAL,
 							"last_checked" INTEGER,
@@ -30,11 +30,7 @@ create_server_tables = """CREATE TABLE "routes_table" (
 							"ip_address"	TEXT UNIQUE,
 							PRIMARY KEY("peer_id" AUTOINCREMENT)
 							);
-						CREATE TRIGGER eliminarRotasPeer AFTER DELETE ON peer_table 
-							FOR EACH ROW
-							BEGIN 
-								DELETE * FROM routes_table WHERE destination = peerIP
-							END	"""
+						"""
 
 def create_table(conn, create_table_sql):
 
@@ -65,7 +61,6 @@ def create_connection(db_file):
 #Only insert route if cost is lower 
 ##### route(sourceIP, destinationIP, next_hop, cost)####
 def insert_route(conn, route):
-
 	sql = ''' INSERT INTO routes_table(source, destination, next_hop, cost, last_checked)
 				VALUES(?,?,?,?, strftime('%s','now'))
 				ON CONFLICT(destination) DO UPDATE SET 
@@ -86,6 +81,16 @@ def insert_route(conn, route):
 
 	return cur.lastrowid
 
+
+def insert_route_server(conn, route):
+
+	sql = ''' INSERT INTO routes_table(source, destination, next_hop, cost, last_checked)
+				VALUES(?,?,?,?, strftime('%s','now'));'''
+
+	cur = conn.cursor()
+	cur.execute(sql, route)
+	conn.commit()
+
 def delete_route(conn, route_id):
 
 	sql = 'DELETE FROM routes_table WHERE route_id'
@@ -97,7 +102,7 @@ def delete_route_by_destination(conn, destination):
 
 	cur = conn.cursor()
 	try:
-		cur.execute('DELETE * FROM routes_table WHERE destination=?', (destination,))
+		cur.execute('DELETE FROM routes_table WHERE destination=?', (destination,))
 		line = cur.fetchone() 
 		print(line)
 		return 0
