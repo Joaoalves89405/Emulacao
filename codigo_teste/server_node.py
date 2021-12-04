@@ -4,11 +4,12 @@ from threading import Thread
 
 hostname = socket.gethostname()
 serverIP = socket.gethostbyname(hostname)
-UDP_PORT = 5001
+UDP_PORT = 5000
 
 Server_ID = "0"
 
 db_conn = create_connection("database/db_%s.db" % hostname)
+
 
 
 
@@ -70,7 +71,15 @@ def udp_socket_listen():
 		return
 	
 
+# class repond_thread(Thread):
 
+# 	def __init__(self, message):
+
+# 		Thread.__init__(self)
+# 		self.message = message
+
+# 	def run(self):
+		
 	
 
 if __name__ == '__main__':

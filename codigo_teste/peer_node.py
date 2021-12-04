@@ -1,15 +1,16 @@
 import socket
 import time
 import db_access
-from threading import Thread
+import threading
 
 
 
-SERVER_IP  = "127.0.1.1"
-UDP_PORT = 5001
-localIP = socket.gethostbyname(socket.gethostname())
-#db_conn = create_connection("database/db_%s.db" % hostname)
-db_conn = db_access.create_connection("database/db_peer.db")
+SERVER_IP  = "10.0.3.10"
+UDP_PORT = 5000
+hostname = socket.gethostname()
+localIP = socket.gethostbyname(hostname)
+
+#db_conn = db_access.create_connection("database/db_peer.db")
 
 local_ID = -1
 
@@ -26,7 +27,7 @@ def send_hello_packet (socket_UDP):
 def goodbye_packet (socket_UDP):
 	socket_UDP.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, MULTICAST_TTL)
 	razao = 1
-	timestamp = time.time()
+	timestamp = time.time_ns()
 	hello = (localIP + str(razao)+ str(timestamp)).encode()
 	socket_UDP.sendto(hello,(MCAST_IP,MCAST_PORT))	
 
@@ -41,60 +42,132 @@ def error_packet (socket_UDP):
 	socket_UDP.sendto(hello,(MCAST_IP,MCAST_PORT))		
 
 
-def receive_packet(message, peer_ip):
-	message_fields = message.split("/")
+def send_test_packet(socket ,peer_ip):
+	global local_ID
+	timestamp = time.time_ns()
+	message = (str(local_ID)+"/"+"3"+"/"+str(timestamp)).encode()
+	socket.sendto(message, (peer_ip, UDP_PORT))
 
-	if message_fields[1] == "0":
-		if message_fields[0] == "0":
+
+def test_routes_directly(socket):
+	db_conn = db_access.create_connection("database/db_%s.db" % hostname)
+	ip_list = db_access.get_all_routes_destinations(db_conn)
+	db_conn.close()
+	for ip in ip_list:
+		send_test_packet(socket, ip[0])	
+		pass
+	
+
+
+def receive_packet(socket, message, peer_ip, recv_timestamp):
+	db_conn = db_access.create_connection("database/db_%s.db" % hostname)
+	global local_ID
+	message_fields = message.split("/")
+	sender_id = message_fields[0]
+	m_type = message_fields[1]
+
+# -> Hello Message  | id | m_type | new self id | neighbours by server |		
+	if m_type == "0":
+		if sender_id == "0":
 			# -> Hello Message from Server
 			local_ID = int(message_fields[2])
 			for ip in message_fields[3:]:
 				#new neighbour
-				route = (local_ID, ip, ip, 999999)
-				db_access.insert_route(db_conn, route)
-			print("Inserted all neighbours on the database")
+				if ip != localIP:
+					route = (local_ID, ip, ip, 999999)
+					db_access.insert_route(db_conn, route)
+					#db_conn.close()
+			print("Inserted neighbours on the database")
 			return 0
 		else:
 			print("Received hello packet not from server")
-	else:
-		print("Message receive not Hello Packet")
+			return 1
 
+# -> Goodbye Message  | id | m_type | timestamp_saida |		
+	elif m_type == "1":
+		if sender_id == "0":
+			print("Ordered by server to shutdown\nShutting down...")
+			return 800
+		else:
+			print("Goodbye message from peer, removing from possible routes")
+			if(db_access.delete_route(db_conn, int(sender_id)) == 0):
+				db_conn.close()
+				print("Deleted successfully route to %s" % peer_ip)
+			else:
+				print ("Route deletetion failed")
 
+# -> Error  | id | m_type | error code | free field |
+	elif m_type == "2":
+		error_code = message_fields[2]
+		if sender_id == "0":
+			print("Error type %s" % error_code) 
+		else:
+			print ("Error received from peer %s" % error_code)
+
+# -> Test Message  | id | m_type | timestamp_saida | null/End-to-End_result |			
+	elif m_type == "3":
+		#print("SENT message at %d " % int(message_fields[2]))
+		wayback_result = recv_timestamp-int(message_fields[2])
+		#print("Received test message, current time elapsed on coming trip (End-to-End) = %s s" % str(wayback_result))  
+
+		if len(message_fields) == 4:
+			test_result = int(message_fields[3])
+			print("Result of End-to-End %d ns" % test_result)
+			route = (local_ID, peer_ip, peer_ip, test_result)
+			db_access.insert_route(db_conn, route)
+			db_conn.close()
+			if message_fields[2] != "-1":
+				time_left = time.time_ns()
+				response = (str(local_ID)+"/"+"3"+"/"+"-1"+"/"+str(wayback_result)).encode()
+				socket.sendto(response,(peer_ip,UDP_PORT))
+			return 0
+		else : 
+			#envia result e timestamp
+			time_left = time.time_ns()
+			message = (str(local_ID)+"/"+"3"+"/"+str(time_left)+"/"+str(wayback_result)).encode()
+			socket.sendto(message,(peer_ip,UDP_PORT))
+			return 0
 
 def udp_socket_listen(socket):
 	#> threading
+	active_threads = []
 	try:
 		while True:
 			message_recv,(peer_ip, peer_port) = socket.recvfrom(1024)
 			if(message_recv != None):
+				recv_timestamp = time.time_ns()
+				print("RECEIVED message at %d " % recv_timestamp)
 				print("Received response : %s" % message_recv.decode() )
-				response = receive_packet(message_recv.decode(), peer_ip)
-				if response == 0:
-					return
+				t2 = threading.Thread(target = receive_packet, args = (socket, message_recv.decode(), peer_ip, recv_timestamp,))
+				t2.start()
+				active_threads.append(t2)
+		
+		for thread in active_threads:
+			thread.join()
+
 	except Exception as e:
 		print(e) 
 
-
 def boot_up():
-	#> Entering Overlay network
-	#> send Hello packet
-	#> receive response treat each one
-	#> Case server > 
-		#> Create database 
-		#> Add peer0
-	#> Case peer >
-		#> Hold until DB is created
-		#> add to DB
 
 	socket_UDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	socket_UDP.bind((localIP,5000))
-	send_hello_packet(socket_UDP)
-	udp_socket_listen(socket_UDP)
+	socket_UDP.bind((localIP,int(UDP_PORT)))
+	t1 = threading.Thread(target=udp_socket_listen, args=(socket_UDP,))
+	t1.start()
+	res = input("Send hello packet? (y/n)")
+	if res == "y":
+		send_hello_packet(socket_UDP)
+	res2 = input("Execute tests? (y/n)")
+	if res2 == "y":
+		test_routes_directly(socket_UDP)
+	t1.join()
+	return
 
 if __name__ == '__main__':
-	
+	db_conn = db_access.create_connection("database/db_%s.db" % hostname)
 	if db_conn is not None:
 		db_access.create_table(db_conn, db_access.create_peer_routes_table)
+		db_conn.close()
 	else:
 		print("Can't access table")
 	boot_up()

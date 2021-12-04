@@ -133,6 +133,29 @@ def check_cost_from_destination(conn, destination):
 	print(cost)
 	return cost
 
+def get_last_time_route_was_checked(conn, route_id):
+	cur = conn.cursor()
+	try:
+		cur.execute('SELECT last_checked FROM routes_table WHERE route_id=?', (route_id,))
+		last_chck = cur.fetchone()[0]
+	except Exception as e:
+		print("There's no destination with that ID. E: %s" % e)
+	return last_chck
+
+
+def get_all_routes_destinations(conn):
+	cur = conn.cursor()
+	try:
+		cur.execute('SELECT destination FROM routes_table')
+		destinations = cur.fetchall()
+		return destinations
+	except Exception as e:
+		print("No routes available. E: %s" % e)
+		return 1
+
+
+
+
 
 #Server function to get all routes from a peer
 def insert_peer(conn, peer):
