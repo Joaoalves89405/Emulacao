@@ -70,7 +70,6 @@ def udp_socket_listen():
 		socket_UDP.close()
 		return
 	
-
 # class repond_thread(Thread):
 
 # 	def __init__(self, message):

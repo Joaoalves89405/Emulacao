@@ -56,6 +56,21 @@ def test_routes_directly(socket):
 	for ip in ip_list:
 		send_test_packet(socket, ip[0])	
 		pass
+
+def ask_cost(socket, ip, destination):
+	global local_ID
+	message = (str(local_ID)+"/"+"4"+"/"+destination).encode()
+	socket.sendto(message,(ip,UDP_PORT))
+
+def ask_neighbours_for_cost(socket):
+	db_conn = db_access.create_connection("database/db_%s.db" % hostname)
+	ip_list = db_access.get_all_routes_destinations(db_conn)
+	db_conn.close()
+	for ip in ip_list:
+		for ip_neighbours in ip_list:
+			if(ip[0] != ip_neighbours[0]):
+				ask_cost(socket, ip_neighbours[0], ip[0])	
+			pass	
 	
 
 
@@ -128,6 +143,19 @@ def receive_packet(socket, message, peer_ip, recv_timestamp):
 			socket.sendto(message,(peer_ip,UDP_PORT))
 			return 0
 
+	elif m_type == "4":
+		ip_destino = message_fields[2]
+		if len(message_fields) < 4:
+			cost = db_access.check_cost_from_destination(db_conn, ip_destino)
+			response = (str(local_ID)+"/"+"4"+"/"+ip_destino+"/"+str(cost)).encode()
+			socket.sendto(response,(peer_ip,UDP_PORT))
+			return 0
+		else:	
+			cost = int(message_fields[3])
+			route = (local_ID, ip_destino, peer_ip, cost)
+			db_access.insert_route(db_conn, route)
+			return 0			
+
 def udp_socket_listen(socket):
 	#> threading
 	active_threads = []
@@ -160,6 +188,9 @@ def boot_up():
 	res2 = input("Execute tests? (y/n)")
 	if res2 == "y":
 		test_routes_directly(socket_UDP)
+	res3 = input("Execute request neighbours? (y/n)")
+	if res3 == "y":
+		ask_neighbours_for_cost(socket_UDP)
 	t1.join()
 	return
 

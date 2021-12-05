@@ -7,7 +7,7 @@ create_peer_routes_table = """CREATE TABLE "routes_table" (
 							"source"	INTEGER NOT NULL,
 							"destination"	TEXT UNIQUE,
 							"next_hop"	TEXT,
-							"cost"	REAL,
+							"cost"	INTEGER,
 							"last_checked" INTEGER,
 							PRIMARY KEY("route_id")
 						);"""
@@ -17,7 +17,7 @@ create_server_tables = """CREATE TABLE "routes_table" (
 							"source"	TEXT NOT NULL,
 							"destination"	TEXT,
 							"next_hop"	TEXT,
-							"cost"	REAL,
+							"cost"	INTEGER,
 							"last_checked" INTEGER,
 							FOREIGN KEY("source") REFERENCES "peer_table"("peer_id")
 							ON DELETE CASCADE,
