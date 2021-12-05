@@ -2,7 +2,7 @@ import socket
 import time
 import db_access
 import threading
-
+import os
 
 
 SERVER_IP  = "10.0.3.10"
@@ -24,12 +24,11 @@ def send_hello_packet (socket_UDP):
 
 			#DATAGRAMA GOODBYE
 #	|	IP	|	RAZAO(1)	|	TIMESTAMP 
-def goodbye_packet (socket_UDP):
-	socket_UDP.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, MULTICAST_TTL)
+def send_goodbye_packet (socket_UDP):
 	razao = 1
 	timestamp = time.time_ns()
-	hello = (localIP + str(razao)+ str(timestamp)).encode()
-	socket_UDP.sendto(hello,(MCAST_IP,MCAST_PORT))	
+	gbye = (localIP + str(razao)+ str(timestamp)).encode()
+	socket_UDP.sendto(gbye,(SERVER_IP,UDP_PORT))
 
 			#DATAGRAMA ERROR
 #	|	IP	|	RAZAO(2)	|	TIMESTAMP 
@@ -98,11 +97,17 @@ def receive_packet(socket, message, peer_ip, recv_timestamp):
 			print("Received hello packet not from server")
 			return 1
 
-# -> Goodbye Message  | id | m_type | timestamp_saida |		
+# -> Goodbye Message  | id | m_type | IP_peer |		
 	elif m_type == "1":
 		if sender_id == "0":
-			print("Ordered by server to shutdown\nShutting down...")
-			return 800
+			db_access.delete_route_by_destination(db_conn, message_fields[2])
+			dest_list = db_access.get_destinations_by_next_hop(db_conn, message_fields[2])
+			if dest_list != None and dest_list != 1 :
+				for ip in dest_list:
+					send_test_packet(socket, ip)
+			else:
+				print("Error fething destinations (Goodbye message)")
+			return 0
 		else:
 			print("Goodbye message from peer, removing from possible routes")
 			if(db_access.delete_route(db_conn, int(sender_id)) == 0):
@@ -152,6 +157,7 @@ def receive_packet(socket, message, peer_ip, recv_timestamp):
 			return 0
 		else:	
 			cost = int(message_fields[3])
+			
 			route = (local_ID, ip_destino, peer_ip, cost)
 			db_access.insert_route(db_conn, route)
 			return 0			
@@ -182,17 +188,26 @@ def boot_up():
 	socket_UDP.bind((localIP,int(UDP_PORT)))
 	t1 = threading.Thread(target=udp_socket_listen, args=(socket_UDP,))
 	t1.start()
-	res = input("Send hello packet? (y/n)")
-	if res == "y":
+
+	db_access.create_connection("database/db_%s.db" % hostname)
+	while db_access.count_routes() == 0:
 		send_hello_packet(socket_UDP)
-	res2 = input("Execute tests? (y/n)")
-	if res2 == "y":
+		time.sleep(300)
+		pass
+	db_access.close()
+
+	while True:
 		test_routes_directly(socket_UDP)
-	res3 = input("Execute request neighbours? (y/n)")
-	if res3 == "y":
 		ask_neighbours_for_cost(socket_UDP)
+		time.sleep(300)
+	
 	t1.join()
 	return
+
+def boot_off():
+	send_goodbye_packet()
+	os.remove("database/db_%s.db" % hostname)
+
 
 if __name__ == '__main__':
 	db_conn = db_access.create_connection("database/db_%s.db" % hostname)

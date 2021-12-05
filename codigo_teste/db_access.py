@@ -153,6 +153,28 @@ def get_all_routes_destinations(conn):
 		print("No routes available. E: %s" % e)
 		return 1
 
+def get_destinations_by_next_hop(conn, next_hop):
+
+	cur = conn.cursor()
+	sql = ''' SELECT destination FROM routes_table WHERE next_hop=?'''
+	try:
+		cur.execute(sql, (next_hop,))
+		destinations = cur.fetchall()
+		return destinations
+	except Exception as e:
+		print("Couldnt fetch destinations from next hop. %s" % e)
+		return 1
+
+def count_routes(conn):
+	cur = conn.cursor()
+	sql = ''' SELECT count(*) FROM routes_table'''
+	try:
+		cur.execute(sql)
+		count = cur.fetchall()
+		return count
+	except Exception as e:
+		print("Couldnt count routes. %s" % e)
+		return 1
 
 
 
