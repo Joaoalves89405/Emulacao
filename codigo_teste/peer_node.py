@@ -3,6 +3,7 @@ import time
 import db_access
 import threading
 import os
+import select
 
 
 SERVER_IP  = "10.0.3.10"
@@ -13,12 +14,13 @@ localIP = socket.gethostbyname(hostname)
 #db_conn = db_access.create_connection("database/db_peer.db")
 
 local_ID = -1
+off_flag = 0
 
 			#DATAGRAMA HELLO
 #	|	ID	|	RAZAO(0)	|	TIMESTAMP 
 def send_hello_packet (socket_UDP):
 	razao = 0
-	timestamp = time.time()
+	timestamp = time.time_ns()
 	hello = (str(local_ID) +"/"+ str(razao)+"/"+ str(timestamp)).encode()
 	socket_UDP.sendto(hello,(SERVER_IP,UDP_PORT))
 
@@ -27,7 +29,7 @@ def send_hello_packet (socket_UDP):
 def send_goodbye_packet (socket_UDP):
 	razao = 1
 	timestamp = time.time_ns()
-	gbye = (localIP + str(razao)+ str(timestamp)).encode()
+	gbye = (str(local_ID) +"/"+str(razao)+"/"+ str(timestamp)).encode()
 	socket_UDP.sendto(gbye,(SERVER_IP,UDP_PORT))
 
 			#DATAGRAMA ERROR
@@ -37,7 +39,7 @@ def error_packet (socket_UDP):
 	localIP=socket.gethostbyname(socket.gethostname())
 	razao = 2
 	timestamp = time.time()
-	hello = (localIP + str(razao)+ str(timestamp)).encode()
+	hello = (str(local_ID) + str(razao)+ str(timestamp)).encode()
 	socket_UDP.sendto(hello,(MCAST_IP,MCAST_PORT))		
 
 
@@ -49,6 +51,7 @@ def send_test_packet(socket ,peer_ip):
 
 
 def test_routes_directly(socket):
+	print("TEsTING routes")
 	db_conn = db_access.create_connection("database/db_%s.db" % hostname)
 	ip_list = db_access.get_all_routes_destinations(db_conn)
 	db_conn.close()
@@ -90,13 +93,13 @@ def receive_packet(socket, message, peer_ip, recv_timestamp):
 				if ip != localIP:
 					route = (local_ID, ip, ip, 999999)
 					db_access.insert_route(db_conn, route)
-					#db_conn.close()
+					
 			print("Inserted neighbours on the database")
 			return 0
 		else:
 			print("Received hello packet not from server")
 			return 1
-
+		db_conn.close()
 # -> Goodbye Message  | id | m_type | IP_peer |		
 	elif m_type == "1":
 		if sender_id == "0":
@@ -111,10 +114,11 @@ def receive_packet(socket, message, peer_ip, recv_timestamp):
 		else:
 			print("Goodbye message from peer, removing from possible routes")
 			if(db_access.delete_route(db_conn, int(sender_id)) == 0):
-				db_conn.close()
+				
 				print("Deleted successfully route to %s" % peer_ip)
 			else:
 				print ("Route deletetion failed")
+		db_conn.close()
 
 # -> Error  | id | m_type | error code | free field |
 	elif m_type == "2":
@@ -135,7 +139,6 @@ def receive_packet(socket, message, peer_ip, recv_timestamp):
 			print("Result of End-to-End %d ns" % test_result)
 			route = (local_ID, peer_ip, peer_ip, test_result)
 			db_access.insert_route(db_conn, route)
-			db_conn.close()
 			if message_fields[2] != "-1":
 				time_left = time.time_ns()
 				response = (str(local_ID)+"/"+"3"+"/"+"-1"+"/"+str(wayback_result)).encode()
@@ -147,66 +150,79 @@ def receive_packet(socket, message, peer_ip, recv_timestamp):
 			message = (str(local_ID)+"/"+"3"+"/"+str(time_left)+"/"+str(wayback_result)).encode()
 			socket.sendto(message,(peer_ip,UDP_PORT))
 			return 0
+		db_conn.close()
 
 	elif m_type == "4":
 		ip_destino = message_fields[2]
 		if len(message_fields) < 4:
 			cost = db_access.check_cost_from_destination(db_conn, ip_destino)
-			response = (str(local_ID)+"/"+"4"+"/"+ip_destino+"/"+str(cost)).encode()
-			socket.sendto(response,(peer_ip,UDP_PORT))
-			return 0
+			if cost != 1:
+				response = (str(local_ID)+"/"+"4"+"/"+ip_destino+"/"+str(cost)).encode()
+				socket.sendto(response,(peer_ip,UDP_PORT))
+				return 0
+			else:
+				return 1
 		else:	
-			cost = int(message_fields[3])
-			
+			cost = int(message_fields[3])+db_access.check_cost_from_destination(db_conn, peer_ip)
 			route = (local_ID, ip_destino, peer_ip, cost)
 			db_access.insert_route(db_conn, route)
-			return 0			
+			return 0	
+		db_conn.close()		
+
 
 def udp_socket_listen(socket):
 	#> threading
+	global off_flag
 	active_threads = []
 	try:
-		while True:
-			message_recv,(peer_ip, peer_port) = socket.recvfrom(1024)
-			if(message_recv != None):
+		while off_flag == 0:
+			r,_,_ = select.select([socket],[],[], 0)
+			if r :
+				message_recv,(peer_ip, peer_port) = socket.recvfrom(1024)			
 				recv_timestamp = time.time_ns()
-				print("RECEIVED message at %d " % recv_timestamp)
-				print("Received response : %s" % message_recv.decode() )
+				# print("RECEIVED message at %d " % recv_timestamp)
+				# print("Received response : %s" % message_recv.decode() )
 				t2 = threading.Thread(target = receive_packet, args = (socket, message_recv.decode(), peer_ip, recv_timestamp,))
 				t2.start()
 				active_threads.append(t2)
 		
+		return
 		for thread in active_threads:
 			thread.join()
-
+		
 	except Exception as e:
 		print(e) 
 
 def boot_up():
+	global off_flag
+	table_count = 0
 
 	socket_UDP = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	socket_UDP.bind((localIP,int(UDP_PORT)))
 	t1 = threading.Thread(target=udp_socket_listen, args=(socket_UDP,))
 	t1.start()
-
-	db_access.create_connection("database/db_%s.db" % hostname)
-	while db_access.count_routes() == 0:
+	while table_count == 0:
+		db_conn = db_access.create_connection("database/db_%s.db" % hostname)
+		table_count = db_access.count_routes(db_conn)
+		print("Table count = %d",table_count)
+		db_conn.close()
 		send_hello_packet(socket_UDP)
-		time.sleep(300)
+		time.sleep(2)
 		pass
-	db_access.close()
-
-	while True:
+	
+	while off_flag == 0:
 		test_routes_directly(socket_UDP)
 		ask_neighbours_for_cost(socket_UDP)
-		time.sleep(300)
-	
+		time.sleep(5)
+
 	t1.join()
+	boot_off(socket_UDP)
 	return
 
-def boot_off():
-	send_goodbye_packet()
+def boot_off(socket):
+	send_goodbye_packet(socket)
 	os.remove("database/db_%s.db" % hostname)
+	print("BOOTING OFF")
 
 
 if __name__ == '__main__':
@@ -214,6 +230,15 @@ if __name__ == '__main__':
 	if db_conn is not None:
 		db_access.create_table(db_conn, db_access.create_peer_routes_table)
 		db_conn.close()
+
+		tester_thread = threading.Thread(target=boot_up)
+		tester_thread.start()
+		res = input("Turn off peer?")
+		if res == "y":
+			 off_flag = 1
+
+		tester_thread.join()
+	
 	else:
 		print("Can't access table")
-	boot_up()
+		

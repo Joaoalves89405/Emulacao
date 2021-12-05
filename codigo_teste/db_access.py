@@ -25,7 +25,7 @@ create_server_tables = """CREATE TABLE "routes_table" (
 							);
 						CREATE TABLE "peer_table" (
 							"peer_id"	INTEGER NOT NULL UNIQUE,
-							"state"	INTEGER,
+							"status"	INTEGER,
 							"area"	INTEGER,
 							"ip_address"	TEXT UNIQUE,
 							PRIMARY KEY("peer_id" AUTOINCREMENT)
@@ -45,7 +45,6 @@ def create_connection(db_file):
 
 	try:
 		conn = sqlite3.connect(db_file)
-		print("Connected %s" % sqlite3.version)
 		return conn
 	except Exception as e:
 		print(e)
@@ -128,10 +127,10 @@ def check_cost_from_destination(conn, destination):
 	try:
 		cur.execute('SELECT cost FROM routes_table WHERE destination=?', (destination,))
 		cost = cur.fetchone()[0]
+		return cost
 	except Exception as e:
 		print("There's no destination with that IP")
-	print(cost)
-	return cost
+		return 1
 
 def get_last_time_route_was_checked(conn, route_id):
 	cur = conn.cursor()
@@ -170,7 +169,7 @@ def count_routes(conn):
 	sql = ''' SELECT count(*) FROM routes_table'''
 	try:
 		cur.execute(sql)
-		count = cur.fetchall()
+		count = cur.fetchone()[0]
 		return count
 	except Exception as e:
 		print("Couldnt count routes. %s" % e)
@@ -182,9 +181,9 @@ def count_routes(conn):
 #Server function to get all routes from a peer
 def insert_peer(conn, peer):
 	cur = conn.cursor()
-	sql = '''INSERT OR IGNORE INTO peer_table( state, area, ip_address)
+	sql = '''INSERT OR IGNORE INTO peer_table( status, area, ip_address)
 				VALUES(?,?,?)ON CONFLICT(ip_address) DO UPDATE SET 
-					state = excluded.state;'''
+					status = excluded.status;'''
 	try:
 		cur.execute(sql, peer)
 		conn.commit()
@@ -230,26 +229,26 @@ def get_peerID(conn, ip_address):
 		print(e)
 		return 1
 
-def get_peer_state(conn, peer_id):
+def get_peer_status(conn, peer_id):
 	cur = conn.cursor()
 	try:
-		cur.execute('''SELECT state FROM peer_table WHERE peer_id=?''',(int(peer_id),))
+		cur.execute('''SELECT status FROM peer_table WHERE peer_id=?''',(int(peer_id),))
 		status = cur.fetchone()[0]
 		return status
 	except Exception as e:
 		print(e)
 		return 1
 
-def set_peer_state(conn, peer_id, status):
+def set_peer_status(conn, ip_address, status):
 	cur = conn.cursor()
-	sql= '''UPDATE peer_table SET state = ? WHERE peer_id=?'''
+	sql= '''UPDATE peer_table SET status = ? WHERE ip_address=?'''
 
 	try:
-		cur.execute(sql,(int(status),int(peer_id),))
+		cur.execute(sql,(int(status),ip_address,))
 		conn.commit()
 		return status
 	except Exception as e:
-		print(e)
+		print("Exception setting peer status:%s"%e)
 		return 1
 
 def get_allpeer_ip(conn):
@@ -260,8 +259,20 @@ def get_allpeer_ip(conn):
 		ip_list = cur.fetchall()
 		return ip_list
 	except Exception as e:
-		print(e)
+		print("Exception getting all peer ips:%s"%e)
 		return 1
+
+def get_active_peer_ip(conn):
+	cur = conn.cursor()
+	try:
+		sql = '''SELECT ip_address FROM peer_table WHERE status = 1'''
+		cur.execute(sql)
+		ip_list = cur.fetchall()
+		return ip_list
+	except Exception as e:
+		print("Exception getting active peer ips:%s"%e)
+		return 1
+
 
 
 if __name__ == '__main__':
@@ -329,7 +340,7 @@ if __name__ == '__main__':
 			insert_route(conn, route)
 
 		#delete_peer(conn, PeerID)
-		set_peer_state(conn, PeerID, 1)
+		set_peer_status(conn, PeerID, 1)
 		
 
 	else :

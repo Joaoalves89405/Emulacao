@@ -6,7 +6,7 @@ hostname = socket.gethostname()
 serverIP = socket.gethostbyname(hostname)
 UDP_PORT = 5000
 
-Server_ID = "0"
+Server_ID = 0
 
 db_conn = create_connection("database/db_%s.db" % hostname)
 
@@ -24,14 +24,14 @@ def respond_message(socket, message, peer_ip):
 			print("Succefully added peer")
 
 			ips_data = ""
-			ip_list = get_allpeer_ip(db_conn)
+			ip_list = get_active_peer_ip(db_conn)
 
 			for idx,tuple in enumerate(ip_list):
 				ips_data = ips_data+"/"+tuple[0]
 
 			peer_id = get_peerID(db_conn, peer_ip)
 			#   SERVER_ID	.|	TPM		.|	GIVEN_ID	.| 	NEIGHBOUR_IP /  NEIGHBOUR_IP	|
-			response = Server_ID+"/"+"0"+"/"+str(peer_id)+ips_data
+			response = str(Server_ID)+"/"+"0"+"/"+str(peer_id)+ips_data
 			print("Responde hello packet: %s" % response)
 			socket.sendto(response.encode(),(peer_ip,UDP_PORT))
 			return 0
@@ -40,10 +40,11 @@ def respond_message(socket, message, peer_ip):
 
 				#GOODBYE MESSAGE
 	elif(message_fields[1] == "1"):
-		if(set_peer_state(db_conn,peer_ip,0) == 0 and delete_route_by_destination(db_conn, peer_ip) == 0 ):
+		if(set_peer_status(db_conn,peer_ip,0) == 0 and delete_route_by_destination(db_conn, peer_ip) == 0 ):
 			print("Removed Peer and its routes")
-			message = (Server_ID +"/"+"1"+"/"+peer_ip).encode()
-			socket.sendto(message,(peer_ip,UDP_PORT))	
+			message = (str(Server_ID) +"/"+"1"+"/"+peer_ip).encode()
+			for peer in get_active_peer_ip(db_conn):
+				socket.sendto(message,(peer[0],UDP_PORT))	
 		else:
 			print("Error while removing peer")		
 
@@ -63,12 +64,12 @@ def udp_socket_listen():
 		while True:
 			message_recv,(peer_ip, peer_port) = socket_UDP.recvfrom(1024)
 			if( message_recv != None):
-				#> threading
-				response = respond_message(socket_UDP, message_recv.decode(), peer_ip)
+				print(message_recv)
+				respond_message(socket_UDP, message_recv.decode(), peer_ip)
 				
 
 	except Exception as e:
-		print(e)
+		print("Exception on socket receive : %s"%e)
 		socket_UDP.close()
 		return		
 	
