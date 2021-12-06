@@ -19,7 +19,7 @@ create_server_tables = """CREATE TABLE "routes_table" (
 							"next_hop"	TEXT,
 							"cost"	INTEGER,
 							"last_checked" INTEGER,
-							FOREIGN KEY("source") REFERENCES "peer_table"("peer_id")
+							FOREIGN KEY("source") REFERENCES "peer_table"("ip_address")
 							ON DELETE CASCADE,
 							PRIMARY KEY("route_id" AUTOINCREMENT)
 							);
@@ -59,7 +59,8 @@ def create_connection(db_file):
 
 #Only insert route if cost is lower 
 ##### route(sourceIP, destinationIP, next_hop, cost)####
-def insert_route(conn, route):
+def insert_route(conn, route, flag):
+	
 	sql = ''' INSERT INTO routes_table(source, destination, next_hop, cost, last_checked)
 				VALUES(?,?,?,?, strftime('%s','now'))
 				ON CONFLICT(destination) DO UPDATE SET 
@@ -73,11 +74,25 @@ def insert_route(conn, route):
 					ELSE cost
 					END
 				WHERE destination IN (excluded.destination);'''
+	
+	sql_f = '''INSERT INTO routes_table(source, destination, next_hop, cost, last_checked)
+				VALUES(?,?,?,?, strftime('%s','now'))
+				ON CONFLICT(destination) DO UPDATE SET 
+					last_checked = excluded.last_checked,
+					next_hop = excluded.next_hop,
+					cost = excluded.cost,
+					source = excluded.source;'''
 
 	cur = conn.cursor()
-	cur.execute(sql, route)
-	conn.commit()
-
+	try:
+		if flag == 0:
+			cur.execute(sql, route)
+		elif flag ==1:
+			cur.execute(sql_f, route)	
+		conn.commit()
+	except Exception as e:
+		print("Exception in DB access - inserting route: %s" % e)
+	
 	return cur.lastrowid
 
 
@@ -102,8 +117,7 @@ def delete_route_by_destination(conn, destination):
 	cur = conn.cursor()
 	try:
 		cur.execute('DELETE FROM routes_table WHERE destination=?', (destination,))
-		line = cur.fetchone() 
-		print(line)
+		conn.commit()
 		return 0
 	except Exception as e:
 		print(e)
@@ -129,7 +143,7 @@ def check_cost_from_destination(conn, destination):
 		cost = cur.fetchone()[0]
 		return cost
 	except Exception as e:
-		print("There's no destination with that IP")
+		print("Exception in DB access - There's no destination with that IP")
 		return 1
 
 def get_last_time_route_was_checked(conn, route_id):
@@ -138,7 +152,7 @@ def get_last_time_route_was_checked(conn, route_id):
 		cur.execute('SELECT last_checked FROM routes_table WHERE route_id=?', (route_id,))
 		last_chck = cur.fetchone()[0]
 	except Exception as e:
-		print("There's no destination with that ID. E: %s" % e)
+		print("Exception in DB access - There's no destination with that ID. E: %s" % e)
 	return last_chck
 
 
@@ -149,7 +163,7 @@ def get_all_routes_destinations(conn):
 		destinations = cur.fetchall()
 		return destinations
 	except Exception as e:
-		print("No routes available. E: %s" % e)
+		print("Exception in DB access - No routes available. E: %s" % e)
 		return 1
 
 def get_destinations_by_next_hop(conn, next_hop):
