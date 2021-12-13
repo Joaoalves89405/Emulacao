@@ -5,6 +5,7 @@ import threading
 import os
 import select
 import ntplib
+import random
 
 
 SERVER_IP  = "10.0.3.10"
@@ -65,11 +66,11 @@ def ask_cost(socket, ip, destination):
 	message = (str(local_ID)+"/"+"4"+"/"+destination).encode()
 	socket.sendto(message,(ip,UDP_PORT))
 
-def ask_neighbours_for_cost(socket):
+def ask_neighbours_for_cost(socket, ip_list):
 	db_conn = db_access.create_connection("database/db_%s.db" % hostname)
-	ip_list = db_access.get_all_routes_destinations(db_conn)
+	db_list = db_access.get_all_routes_destinations(db_conn)
 	db_conn.close()
-	for ip in ip_list:
+	for ip in db_list:
 		for ip_neighbours in ip_list:
 			if(ip[0] != ip_neighbours[0]):
 				ask_cost(socket, ip_neighbours[0], ip[0])	
@@ -88,6 +89,23 @@ def ntp_sync():
 
 	except Exception as e :
 		print("Error getting ntp_sync: %s" % e)
+
+def set_neighbours_peers(db_conn):
+	peer_list = db_access.get_all_routes_destinations(db_conn)
+	# for ip in db_list:
+	# 	peer_list.append(ip[0])
+	# 	pass
+	if len(peer_list)<=3:
+		rand_peer = random.sample(peer_list,1)	
+	elif 3<len(peer_list)<=5:
+		rand_peer = random.sample(peer_list,2)
+	elif 5<len(peer_list)<=10:
+		rand_peer = random.sample(peer_list,3)
+	else:
+		rand_peer = random.sample(peer_list,round(len(peer_list)*0.15))
+
+	print("Vizinhos do peer: %s" % rand_peer)
+	return rand_peer
 
 
 
@@ -115,7 +133,7 @@ def receive_packet(socket, message, peer_ip, recv_timestamp):
 			return 1
 		db_conn.close()
 # -> Goodbye Message  | id | m_type | IP_peer |		
-	elif m_type == "1":
+#	elif m_type == "1":
 		if sender_id == "0":
 			if db_access.delete_route_by_destination(db_conn, message_fields[2]) == 0:
 				print("Deleted "+message_fields[2]+" from table")
@@ -124,7 +142,8 @@ def receive_packet(socket, message, peer_ip, recv_timestamp):
 			dest_list = db_access.get_destinations_by_next_hop(db_conn, message_fields[2]) 
 			if dest_list != None and dest_list != 1 :
 				for ip in dest_list:
-					send_test_packet(socket, ip)
+					print("A testar para %s" % ip[0])
+					send_test_packet(socket, ip[0])
 			else:
 				print("Error fething destinations (Goodbye message)")
 			return 0
@@ -149,7 +168,8 @@ def receive_packet(socket, message, peer_ip, recv_timestamp):
 	elif m_type == "3":
 		#print("SENT message at %d " % int(message_fields[2]))
 		wayback_result = recv_timestamp-int(message_fields[2])
-		#print("Received test message, current time elapsed on coming trip (End-to-End) = %s s" % str(wayback_result))  
+		#print("Received test from "+ peer_ip)
+		#print("current time elapsed on coming trip (End-to-End) = "+str(wayback_result))  
 
 		if len(message_fields) == 4:
 			test_result = int(message_fields[3])
@@ -172,6 +192,9 @@ def receive_packet(socket, message, peer_ip, recv_timestamp):
 
 # -> Request Cost Message  | id | m_type | destination_ip | null/cost |	
 	elif m_type == "4":
+
+		#-> set_neighbour_peers
+
 		ip_destino = message_fields[2]
 		if len(message_fields) < 4:
 			cost = db_access.check_cost_from_destination(db_conn, ip_destino)
@@ -184,6 +207,7 @@ def receive_packet(socket, message, peer_ip, recv_timestamp):
 		else:	
 			cost = int(message_fields[3])+db_access.check_cost_from_destination(db_conn, peer_ip)
 			route = (local_ID, ip_destino, peer_ip, cost)
+			#print(route)
 			db_access.insert_route(db_conn, route,1)
 			return 0	
 		db_conn.close()		
@@ -200,7 +224,7 @@ def udp_socket_listen(socket):
 				message_recv,(peer_ip, peer_port) = socket.recvfrom(1024)			
 				recv_timestamp = time.time_ns()
 				# print("RECEIVED message at %d " % recv_timestamp)
-				# print("Received response : %s" % message_recv.decode() )
+				#print("Received response : %s" % message_recv.decode() )
 				t2 = threading.Thread(target = receive_packet, args = (socket, message_recv.decode(), peer_ip, recv_timestamp,))
 				t2.start()
 				active_threads.append(t2)
@@ -220,18 +244,24 @@ def boot_up(time_between_tests):
 	socket_UDP.bind((localIP,int(UDP_PORT)))
 	t1 = threading.Thread(target=udp_socket_listen, args=(socket_UDP,))
 	t1.start()
+	ip_list=[]
 
 	while table_count == 0:
 		send_hello_packet(socket_UDP)
 		time.sleep(10)
 		db_conn = db_access.create_connection("database/db_%s.db" % hostname)
 		table_count = db_access.count_routes(db_conn)
+		if table_count>0:
+			try:
+				ip_list = set_neighbours_peers(db_conn)
+			except Exception as e:
+				print("waiting for more peers... %s"% e)
 		db_conn.close()		
 		pass
 	
 	while off_flag == 0:
 		test_routes_directly(socket_UDP)
-		ask_neighbours_for_cost(socket_UDP)
+		ask_neighbours_for_cost(socket_UDP, ip_list)
 		time.sleep(time_between_tests)
 
 	t1.join()
@@ -239,8 +269,8 @@ def boot_up(time_between_tests):
 	return
 
 def boot_off(socket):
-	send_goodbye_packet(socket)
-	os.remove("database/db_%s.db" % hostname)
+	#send_goodbye_packet(socket)
+	#os.remove("database/db_%s.db" % hostname)
 	print("Booting off...")
 
 
@@ -250,7 +280,7 @@ if __name__ == '__main__':
 		db_access.create_table(db_conn, db_access.create_peer_routes_table)
 		db_conn.close()
 
-		tester_thread = threading.Thread(target=boot_up, args=(30,))
+		tester_thread = threading.Thread(target=boot_up, args=(10,))
 		tester_thread.start()
 		res = input("Send \"x\" to stop peer\n")
 		if res == "x":

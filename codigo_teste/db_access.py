@@ -122,6 +122,16 @@ def delete_route_by_destination(conn, destination):
 	except Exception as e:
 		print(e)
 		return 1
+		
+def update_next_hop_on_destination(conn, destination, next_hop):
+	cur = conn.cursor()
+	sql = ''' UPDATE routes_table SET next_hop=? WHERE=destination=?'''
+
+	try:
+		cur.execute(sql,(next_hop, destination))
+		conn.commit()
+	except Exception as e:
+		print("Exception in DB access - updating next hop: %s",e)
 
 def select_route_by_destination(conn, destination):
 
