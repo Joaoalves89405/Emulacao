@@ -125,13 +125,25 @@ def delete_route_by_destination(conn, destination):
 		
 def update_next_hop_on_destination(conn, destination, next_hop):
 	cur = conn.cursor()
-	sql = ''' UPDATE routes_table SET next_hop=? WHERE=destination=?'''
+	sql = ''' UPDATE routes_table SET next_hop=? WHERE destination=?'''
 
 	try:
 		cur.execute(sql,(next_hop, destination))
 		conn.commit()
 	except Exception as e:
 		print("Exception in DB access - updating next hop: %s",e)
+
+
+def next_hop_by_destination(conn, destination):
+	cur = conn.cursor()
+	sql = ''' SELECT next_hop FROM routes_table WHERE destination=? '''
+	try:
+		cur.execute(sql,(destination,))
+		next_hop_result =  cur.fetchone()[0]
+		print("DATABASE:"+ str(next_hop_result))
+		return next_hop_result
+	except Exception as e:
+		print("Exception in DB access - getting next hop:",e)
 
 def select_route_by_destination(conn, destination):
 
@@ -198,6 +210,19 @@ def count_routes(conn):
 	except Exception as e:
 		print("Couldnt count routes. %s" % e)
 		return 1
+
+def get_next_hops(conn):
+	cur = conn.cursor()
+	sql = ''' SELECT DISTINCT next_hop FROM routes_table'''
+	try:
+		cur.execute(sql)
+		neighbours = cur.fetchall()
+		return neighbours
+	except Exception as e:
+		print("Couldnt count routes. %s" % e)
+		return 1
+
+
 
 
 

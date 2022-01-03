@@ -4,7 +4,7 @@ import cv2
 
 # create socket
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-host_ip = '127.0.1.1'  # paste your server ip address here
+host_ip = '10.0.17.20'  # paste your server ip address here
 port = 9999
 client_socket.connect((host_ip, port))  # a tuple
 data = b""

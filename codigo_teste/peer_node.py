@@ -51,15 +51,35 @@ def send_test_packet(socket ,peer_ip):
 	message = (str(local_ID)+"/"+"3"+"/"+str(timestamp)).encode()
 	socket.sendto(message, (peer_ip, UDP_PORT))
 
+def	send_encapsulated_message(socket, data, destination):
+	global local_ID
+	message = (str(local_ID)+"/"+"5"+"/"+data+"/"+str(localIP)+"/"+destination).encode()
+	db_conn = db_access.create_connection("database/db_%s.db" % hostname)
+	next_hop = db_access.next_hop_by_destination(db_conn, destination)
+	print("Manda pacote encapsulado para: "), print(next_hop)
+	print("Para o destino : "), print(destination) 
+	db_conn.close()
+	socket.sendto(message, (str(next_hop), UDP_PORT))	
 
-def test_routes_directly(socket):
+def test_routes(socket, network):
 	ntp_sync()
 	db_conn = db_access.create_connection("database/db_%s.db" % hostname)
 	ip_list = db_access.get_all_routes_destinations(db_conn)
+	print("IP_LIST ", ip_list)
 	db_conn.close()
-	for ip in ip_list:
-		send_test_packet(socket, ip[0])	
-		pass
+	if network == "underlay":
+		for ip in [i for i in ip_list if i != None]:
+			print("testou uma rota da underlay"),print(ip[0])
+			send_test_packet(socket, ip[0])	
+	elif network == "overlay":
+		for ip in [i for i in ip_list if i != None]:
+			timestamp = time.time_ns()
+			print("testou na OVERLAY uma rota para: "),print(ip[0])
+			message = str(local_ID)+"|"+"3"+"|"+str(timestamp)
+			send_encapsulated_message(socket, message, ip[0])
+	else:
+		print("Network undefined in test routes")
+
 
 def ask_cost(socket, ip, destination):
 	global local_ID
@@ -95,9 +115,9 @@ def set_neighbours_peers(db_conn):
 	# for ip in db_list:
 	# 	peer_list.append(ip[0])
 	# 	pass
-	if len(peer_list)<=3:
+	if len(peer_list)<=2:
 		rand_peer = random.sample(peer_list,1)	
-	elif 3<len(peer_list)<=5:
+	elif 2<len(peer_list)<=5:
 		rand_peer = random.sample(peer_list,2)
 	elif 5<len(peer_list)<=10:
 		rand_peer = random.sample(peer_list,3)
@@ -106,6 +126,42 @@ def set_neighbours_peers(db_conn):
 
 	print("Vizinhos do peer: %s" % rand_peer)
 	return rand_peer
+
+def rcv_test_message(socket, message_fields, peer_ip, recv_timestamp, encap_flag):
+	wayback_result = recv_timestamp-int(message_fields[2])
+	db_conn = db_access.create_connection("database/db_%s.db" % hostname)
+	#print("Received test from "+ peer_ip)
+	#print("current time elapsed on coming trip (End-to-End) = "+str(wayback_result))  
+
+	if len(message_fields) == 4:
+		test_result = int(message_fields[3])
+		route = (local_ID, peer_ip, peer_ip, test_result)
+		if message_fields[2] != "-1":
+			db_access.insert_route(db_conn, route, 0)
+			time_left = time.time_ns()
+			if encap_flag:
+				response = str(local_ID)+"|"+"3"+"|"+"-1"+"|"+str(wayback_result)
+				#print("Rcv-encap_test-message from "),print(peer_ip)
+				send_encapsulated_message(socket, response, peer_ip)	
+			else:
+				response = (str(local_ID)+"/"+"3"+"/"+"-1"+"/"+str(wayback_result)).encode()
+				socket.sendto(response,(peer_ip,UDP_PORT))
+		else:
+			db_access.insert_route(db_conn, route, 1)
+			return 0
+	else : 
+		#envia result e timestamp
+		time_left = time.time_ns()
+		if encap_flag:
+			message = str(local_ID)+"|"+"3"+"|"+str(time_left)+"|"+str(wayback_result)
+			#print("Rcv-test-message encapsulated but has no result from "),print(peer_ip)
+			send_encapsulated_message(socket, message, peer_ip)	
+		else:
+			message = (str(local_ID)+"/"+"3"+"/"+str(time_left)+"/"+str(wayback_result)).encode()
+			socket.sendto(message,(peer_ip,UDP_PORT))
+		return 0
+		
+	db_conn.close()
 
 
 
@@ -144,6 +200,7 @@ def receive_packet(socket, message, peer_ip, recv_timestamp):
 				for ip in dest_list:
 					print("A testar para %s" % ip[0])
 					send_test_packet(socket, ip[0])
+					set_neighbours_peers(db_conn)
 			else:
 				print("Error fething destinations (Goodbye message)")
 			return 0
@@ -166,29 +223,30 @@ def receive_packet(socket, message, peer_ip, recv_timestamp):
 
 # -> Test Message  | id | m_type | timestamp_saida | null/End-to-End_result |			
 	elif m_type == "3":
-		#print("SENT message at %d " % int(message_fields[2]))
-		wayback_result = recv_timestamp-int(message_fields[2])
-		#print("Received test from "+ peer_ip)
-		#print("current time elapsed on coming trip (End-to-End) = "+str(wayback_result))  
+		rcv_test_message(socket, message_fields, peer_ip, recv_timestamp, False )
+		# #print("SENT message at %d " % int(message_fields[2]))
+		# wayback_result = recv_timestamp-int(message_fields[2])
+		# #print("Received test from "+ peer_ip)
+		# #print("current time elapsed on coming trip (End-to-End) = "+str(wayback_result))  
 
-		if len(message_fields) == 4:
-			test_result = int(message_fields[3])
-			route = (local_ID, peer_ip, peer_ip, test_result)
-			if message_fields[2] != "-1":
-				db_access.insert_route(db_conn, route, 0)
-				time_left = time.time_ns()
-				response = (str(local_ID)+"/"+"3"+"/"+"-1"+"/"+str(wayback_result)).encode()
-				socket.sendto(response,(peer_ip,UDP_PORT))
-			else:
-				db_access.insert_route(db_conn, route, 1)
-			return 0
-		else : 
-			#envia result e timestamp
-			time_left = time.time_ns()
-			message = (str(local_ID)+"/"+"3"+"/"+str(time_left)+"/"+str(wayback_result)).encode()
-			socket.sendto(message,(peer_ip,UDP_PORT))
-			return 0
-		db_conn.close()
+		# if len(message_fields) == 4:
+		# 	test_result = int(message_fields[3])
+		# 	route = (local_ID, peer_ip, peer_ip, test_result)
+		# 	if message_fields[2] != "-1":
+		# 		db_access.insert_route(db_conn, route, 0)
+		# 		time_left = time.time_ns()
+		# 		response = (str(local_ID)+"/"+"3"+"/"+"-1"+"/"+str(wayback_result)).encode()
+		# 		socket.sendto(response,(peer_ip,UDP_PORT))
+		# 	else:
+		# 		db_access.insert_route(db_conn, route, 1)
+		# 	return 0
+		# else : 
+		# 	#envia result e timestamp
+		# 	time_left = time.time_ns()
+		# 	message = (str(local_ID)+"/"+"3"+"/"+str(time_left)+"/"+str(wayback_result)).encode()
+		# 	socket.sendto(message,(peer_ip,UDP_PORT))
+		# 	return 0
+		# db_conn.close()
 
 # -> Request Cost Message  | id | m_type | destination_ip | null/cost |	
 	elif m_type == "4":
@@ -210,7 +268,22 @@ def receive_packet(socket, message, peer_ip, recv_timestamp):
 			#print(route)
 			db_access.insert_route(db_conn, route,1)
 			return 0	
-		db_conn.close()		
+		db_conn.close()	
+
+# -> Encapsulated message treat accordingly
+	# -> [ id | m_type | data | source | destination_ip ]	
+	elif m_type == "5":
+		print(message_fields)
+		destination_ip = message_fields[4]
+		data = message_fields[2]
+		if(destination_ip != localIP):
+			print("Received message to redirect to"),print(destination_ip)
+			send_encapsulated_message(socket, data, destination_ip)
+		else:
+			data_fields = data.split("|")
+			if(data_fields[1] == "3"):
+				rcv_test_message(socket, data_fields, peer_ip, recv_timestamp, True )
+
 
 
 def udp_socket_listen(socket):
@@ -244,7 +317,6 @@ def boot_up(time_between_tests):
 	socket_UDP.bind((localIP,int(UDP_PORT)))
 	t1 = threading.Thread(target=udp_socket_listen, args=(socket_UDP,))
 	t1.start()
-	ip_list=[]
 
 	while table_count == 0:
 		send_hello_packet(socket_UDP)
@@ -254,15 +326,21 @@ def boot_up(time_between_tests):
 		if table_count>0:
 			try:
 				ip_list = set_neighbours_peers(db_conn)
+				ask_neighbours_for_cost(socket_UDP, ip_list)
 			except Exception as e:
 				print("waiting for more peers... %s"% e)
 		db_conn.close()		
 		pass
 	
+	test_routes(socket_UDP, "underlay")
 	while off_flag == 0:
-		test_routes_directly(socket_UDP)
+		db_conn = db_access.create_connection("database/db_%s.db" % hostname)
+		ip_list = db_access.get_next_hops(db_conn)
+		db_conn.close()
 		ask_neighbours_for_cost(socket_UDP, ip_list)
+		test_routes(socket_UDP, "overlay")		
 		time.sleep(time_between_tests)
+
 
 	t1.join()
 	boot_off(socket_UDP)
