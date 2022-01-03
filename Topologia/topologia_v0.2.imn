@@ -74,7 +74,8 @@ node n2 {
 	hostname R2
 	!
 	interface eth2
-	 ip address 10.0.200.1/24
+	 ip address 10.0.29.1/24
+	 ipv6 address 2001:2::1/64
 	!
 	interface eth1
 	 ip address 10.0.8.2/24
@@ -253,66 +254,6 @@ node n3 {
 	
 	}
     }
-    services {OSPFv2 OSPFv3 zebra IPForward}
-}
-
-node n4 {
-    type router
-    model router
-    network-config {
-	hostname R4
-	!
-	interface eth1
-	 ip address 10.0.200.2/24
-	!
-	interface eth2
-	 ip address 10.0.6.19/24
-	!
-	interface eth0
-	 ip address 10.0.5.2/24
-	!
-    }
-    canvas c1
-    iconcoords {1195.0 370.0}
-    labelcoords {1195.0 402.0}
-    interface-peer {eth0 n6}
-    interface-peer {eth2 n5}
-    custom-config {
-	custom-config-id service:zebra
-	custom-command zebra
-	config {
-	files=('/usr/local/etc/quagga/Quagga.conf', 'quaggaboot.sh', '/usr/local/etc/quagga/vtysh.conf', )
-	}
-    }
-    custom-config {
-	custom-config-id service:zebra:/usr/local/etc/quagga/Quagga.conf
-	custom-command /usr/local/etc/quagga/Quagga.conf
-	config {
-	interface eth0
-	  ip address 10.0.5.2/24
-	!
-	interface eth1
-	  ip address 10.0.200.2/24
-	!
-	interface eth2
-	  ip address 10.0.6.19/24
-	!
-	router ospf
-	  router-id 10.0.5.2
-	  network 10.0.5.2/24 area 2
-	  network 10.0.200.2/24 area 2
-	  network 10.0.6.19/24 area 2
-	!
-	router ospf6
-	  instance-id 65
-	  router-id 10.0.5.2
-	  interface eth0 area 0.0.0.2
-	  interface eth1 area 0.0.0.2
-	  interface eth2 area 0.0.0.2
-	!
-	}
-    }
-    interface-peer {eth1 n2}
     services {OSPFv2 OSPFv3 zebra IPForward}
 }
 
@@ -974,20 +915,20 @@ node n6 {
     network-config {
 	hostname R6
 	!
+	interface eth1
+	 ip address 10.0.5.1/24
+	 ipv6 address 2001:0::1/64
+	!
 	interface eth0
 	 ip address 10.0.3.1/24
 	!
 	interface eth2
 	 ip address 10.0.21.2/24
 	!
-	interface eth1
-	 ip address 10.0.5.1/24
-	!
     }
     canvas c1
     iconcoords {1126.0 268.0}
     labelcoords {1126.0 300.0}
-    interface-peer {eth1 n4}
     interface-peer {eth2 n30}
     interface-peer {eth0 n23}
     custom-config {
@@ -1027,6 +968,7 @@ node n6 {
 	}
     }
     services {OSPFv2 OSPFv3 zebra IPForward}
+    interface-peer {eth1 n4}
 }
 
 node n31 {
@@ -1070,10 +1012,10 @@ node n5 {
     canvas c1
     iconcoords {1327.0 327.0}
     labelcoords {1319.0 355.0}
-    interface-peer {e0 n4}
     interface-peer {e1 n32}
     interface-peer {e2 n31}
     interface-peer {e3 n14}
+    interface-peer {e0 n4}
 }
 
 node n7 {
@@ -1348,6 +1290,81 @@ node n35 {
     interface-peer {0 n8}
 }
 
+node n4 {
+    type router
+    model router
+    network-config {
+	hostname n4
+	!
+	interface eth2
+	 ip address 10.0.6.1/24
+	!
+	interface eth1
+	 ip address 10.0.29.2/24
+	!
+	interface eth0
+	 ip address 10.0.5.2/24
+	!
+    }
+    canvas c1
+    iconcoords {1164.0 357.0}
+    labelcoords {1164.0 389.0}
+    interface-peer {eth0 n6}
+    interface-peer {eth1 n2}
+    interface-peer {eth2 n5}
+    custom-config {
+	custom-config-id service:zebra
+	custom-command zebra
+	config {
+	files=('/usr/local/etc/quagga/Quagga.conf', 'quaggaboot.sh', '/usr/local/etc/quagga/vtysh.conf', )
+	}
+    }
+    custom-config {
+	custom-config-id service:zebra:/usr/local/etc/quagga/Quagga.conf
+	custom-command /usr/local/etc/quagga/Quagga.conf
+	config {
+	interface eth0
+	  ip address 10.0.5.2/24
+	  ip ospf network point-to-point
+	  ip ospf hello-interval 2
+	  ip ospf dead-interval 6
+	  ip ospf retransmit-interval 5
+	  
+	!
+	interface eth1
+	  ip address 10.0.29.2/24
+	  ip ospf network point-to-point
+	  ip ospf hello-interval 2
+	  ip ospf dead-interval 6
+	  ip ospf retransmit-interval 5
+	  
+	!
+	interface eth2
+	  ip address 10.0.6.1/24
+	  ip ospf hello-interval 2
+	  ip ospf dead-interval 6
+	  ip ospf retransmit-interval 5
+	  
+	!
+	router ospf
+	  router-id 10.0.5.2
+	  network 10.0.5.2/24 area 2
+	  network 10.0.29.2/24 area 2
+	  network 10.0.6.1/24 area 2
+	!
+	router ospf6
+	  instance-id 65
+	  router-id 10.0.5.2
+	  interface eth0 area 0.0.0.2
+	  interface eth1 area 0.0.0.2
+	  interface eth2 area 0.0.0.2
+	!
+	
+	}
+    }
+    services {OSPFv2 OSPFv3 zebra IPForward}
+}
+
 link l1 {
     nodes {n1 n3}
     bandwidth 0
@@ -1415,18 +1432,8 @@ link l26 {
     bandwidth 0
 }
 
-link l6 {
-    nodes {n6 n4}
-    bandwidth 0
-}
-
 link l31 {
     nodes {n30 n6}
-    bandwidth 0
-}
-
-link l3 {
-    nodes {n4 n5}
     bandwidth 0
 }
 
@@ -1534,13 +1541,23 @@ link l39 {
     nodes {n8 n35}
 }
 
-link l7 {
+link l9 {
+    nodes {n9 n30}
+    bandwidth 0
+}
+
+link l3 {
+    nodes {n6 n4}
+    bandwidth 0
+}
+
+link l6 {
     nodes {n2 n4}
     bandwidth 0
 }
 
-link l9 {
-    nodes {n9 n30}
+link l7 {
+    nodes {n4 n5}
     bandwidth 0
 }
 
