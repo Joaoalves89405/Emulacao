@@ -561,7 +561,7 @@ node n11 {
     interface-peer {eth1 n10}
     interface-peer {eth0 n17}
     interface-peer {eth2 n3}
-    services {OSPFv2 OSPFv3 zebra IPForward StaticRoute}
+    services {OSPFv2 OSPFv3 zebra IPForward}
     custom-config {
 	custom-config-id service:zebra
 	custom-command zebra
@@ -696,8 +696,8 @@ node n13 {
 	!
     }
     canvas c1
-    iconcoords {307.0 574.0}
-    labelcoords {286.0 572.0}
+    iconcoords {306.0 574.0}
+    labelcoords {285.0 572.0}
     interface-peer {eth0 n1}
 }
 
@@ -843,8 +843,8 @@ node n29 {
 	!
     }
     canvas c1
-    iconcoords {1145.0 28.0}
-    labelcoords {1145.0 60.0}
+    iconcoords {1145.0 26.0}
+    labelcoords {1145.0 58.0}
     interface-peer {eth0 n7}
 }
 
@@ -1043,8 +1043,8 @@ node n14 {
 	!
     }
     canvas c1
-    iconcoords {1296.0 191.0}
-    labelcoords {1327.0 181.0}
+    iconcoords {1296.0 190.0}
+    labelcoords {1327.0 180.0}
     interface-peer {eth0 n5}
 }
 
