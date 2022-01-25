@@ -20,20 +20,28 @@ def respond_message(socket, message, peer_ip):
 	if (message_fields[1] == "0"):
 			#estado | area | IP
 		peer = (1,None,peer_ip)
+		
 		if(insert_peer(db_conn, peer) == 0):
 			print("Succefully added peer")
 
 			ips_data = ""
 			ip_list = get_active_peer_ip(db_conn)
+			print(ip_list)
 
 			for idx,tuple in enumerate(ip_list):
 				ips_data = ips_data+"/"+tuple[0]
 
+			print(ips_data)
 			peer_id = get_peerID(db_conn, peer_ip)
-			#   SERVER_ID	.|	TPM		.|	GIVEN_ID	.| 	NEIGHBOUR_IP /  NEIGHBOUR_IP	|
+			#   SERVER_ID.|		TPM	.|	GIVEN_ID	.| 	NEIGHBOUR_IP /  NEIGHBOUR_IP	|
 			response = str(Server_ID)+"/"+"0"+"/"+str(peer_id)+ips_data
 			print("Responde hello packet: %s" % response)
 			socket.sendto(response.encode(),(peer_ip,UDP_PORT))
+			for ip in [x for x in ip_list if x[0] != peer_ip]:
+				print(ip[0])
+				response = str(99)+"/"+"0"+"/"+str(peer_ip)
+				socket.sendto(response.encode(),(ip[0], UDP_PORT))
+				print("Peer avisados de nova entrada : ", ip[0])
 			return 0
 		else:
 			print("Error inserting peer")
@@ -64,7 +72,7 @@ def udp_socket_listen():
 		while True:
 			message_recv,(peer_ip, peer_port) = socket_UDP.recvfrom(1024)
 			if( message_recv != None):
-				print(message_recv)
+				print("Mensagem recebida: ", message_recv)
 				respond_message(socket_UDP, message_recv.decode(), peer_ip)
 				
 

@@ -140,10 +140,9 @@ def next_hop_by_destination(conn, destination):
 	try:
 		cur.execute(sql,(destination,))
 		next_hop_result =  cur.fetchone()[0]
-		print("DATABASE:"+ str(next_hop_result))
 		return next_hop_result
 	except Exception as e:
-		print("Exception in DB access - getting next hop:",e)
+		print("Exception in DB access - getting next hop to "+ str(destination)+" :",e)
 
 def select_route_by_destination(conn, destination):
 
